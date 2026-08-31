@@ -1,0 +1,21 @@
+# Bibliographic metadata -> DTBook <head>, NCX <head>, OPF <metadata>.
+# Fill these in before running step 06.
+
+title: "Tư Duy Đặt Cược"
+subtitle: "Quyết Định Sáng Suốt Hơn Khi Không Có Đủ Thông Tin"
+creators:
+  - name: "Annie Duke"
+    role: aut
+  - name: "Mai Chí Trung"
+    role: trl
+language: vi
+publisher: ""                    # Vietnamese publisher of this edition
+isbn: ""                         # dc:Identifier - SHARED across all chapter books
+pub_year: ""
+rights: ""
+# Producing team (student ids) - drives the submission folder name in step 08.
+mshv: ["MSHV1", "MSHV2", "MSHV3"]
+book_slug: "Tu_Duy_Dat_Cuoc"    # ASCII slug used for folders / zip names
+
+# DAISY content type. audioFullText = full audio + full text + full sync.
+multimedia_type: audioFullText

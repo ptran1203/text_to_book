@@ -1,0 +1,13 @@
+# Python deps for the DAISY pipeline (pip install -r requirements.txt)
+PyMuPDF>=1.24        # step 00  PDF -> images
+pytesseract>=0.3.10  # step 01  OCR (needs the Tesseract binary + 'vie' traineddata)
+Pillow>=10.0         # step 01
+numpy>=1.24          # step 01  Otsu / deskew (optional but recommended)
+ftfy>=6.1            # step 02  mojibake repair (optional)
+PyYAML>=6.0          # config
+
+# External, install separately (not pip):
+#   Tesseract OCR + vie.traineddata     https://github.com/UB-Mannheim/tesseract/wiki
+#   piper + a Vietnamese voice (.onnx)  https://github.com/rhasspy/piper
+#   ffmpeg                              https://ffmpeg.org
+#   DAISY Pipeline 2 (needs Java 11+)   https://daisy.github.io/pipeline/

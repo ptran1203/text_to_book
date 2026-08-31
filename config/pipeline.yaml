@@ -1,0 +1,72 @@
+# Knobs for the DAISY pipeline. Paths may be bare exe names (resolved on PATH)
+# or absolute paths. Windows examples shown.
+
+source_pdf: data/book.pdf
+
+step_00_extract:
+  # When a page is a single full-page scan, extract that image losslessly.
+  # Otherwise rasterise the page vector content at this DPI.
+  render_dpi: 300
+  prefer_native_images: true
+  image_format: png            # png | tiff  (for rendered pages)
+
+step_01_ocr:
+  tesseract: "C:/Program Files/Tesseract-OCR/tesseract.exe"
+  lang: vie
+  oem: 1                       # 1 = LSTM
+  psm: 6                       # 6 = assume a single uniform block of text
+  preprocess:
+    grayscale: true
+    autocontrast: true
+    otsu_threshold: true       # binarise; needs numpy
+    deskew: true               # small-angle deskew; needs numpy
+  min_word_confidence: 60      # words below this go into issues.csv
+
+step_02_clean:
+  dehyphenate_linebreaks: true
+  join_wrapped_lines: true
+  strip_running_headers: true
+  running_header_min_ratio: 0.30   # a top/bottom line seen on >=30% of pages is furniture
+  drop_pagenumber_lines: true
+  hunspell:
+    enabled: false
+    dict_dir: ""              # dir containing vi_VN.dic / vi_VN.aff
+  # ordered list of [pattern, replacement] regexes applied to every page
+  replacements:
+    - ['[ \t]+([,.;:!?])', '\1']       # no space before punctuation
+    - ['([,.;:!?])(?=\S)', '\1 ']      # ensure space after punctuation
+    - ['\u00a0', ' ']                  # nbsp -> space
+
+step_03_structure:
+  # printed_page_number = image_index (1-based) + page_offset
+  page_offset: 0
+  # heading heuristic (used by --detect to seed config/structure.yaml)
+  heading_height_ratio: 1.35   # line height >= ratio * page median -> heading candidate
+  heading_regex: '^(PH\u1EA6N|Ph\u1EA7n|CH\u01AF\u01A0NG|Ch\u01B0\u01A1ng|Chapter|PART)\b'
+  sentence_split: true
+
+step_04_tts:
+  piper: "piper"                       # or C:/tools/piper/piper.exe
+  model: "C:/tools/piper/vi_VN-vais1000-medium.onnx"
+  ffmpeg: "ffmpeg"
+  mp3_qscale: 4                        # libmp3lame VBR quality (0 best .. 9)
+  sample_rate: 22050
+  length_scale: 1.0                    # >1 slower speech
+
+step_05_smil: {}
+
+step_06_package:
+  # one DAISY 3 book per chapter (README: large books split; ISBN shared)
+  split: per_chapter                   # per_chapter | single
+  audio_dir_name: audio
+
+step_07_validate:
+  dp2: "dp2"                           # DAISY Pipeline 2 CLI
+  run_validator: true
+  run_mastering: false                 # daisy3-to-daisy3 normalisation pass
+  fail_on_validator_error: true
+
+step_08_submit:
+  # Output tree:  <mshv_folder>/<book_slug>-Ch\u01B0\u01A1ng N/{Ten_sach.zip, Ten_sach_sha256sums.txt}
+  zip_basename: "Ten_sach"            # README uses "T\u00ean_s\u00e1ch"; ASCII-safe default
+  sha256_of_members: true            # hash each file inside the zip (sha256sums.txt format)
