@@ -6,15 +6,32 @@ subtitle: "Quyết Định Sáng Suốt Hơn Khi Không Có Đủ Thông Tin"
 creators:
   - name: "Annie Duke"
     role: aut
-  - name: "Mai Chí Trung"
-    role: trl
 language: vi
-publisher: ""                    # Vietnamese publisher of this edition
-isbn: ""                         # dc:Identifier - SHARED across all chapter books
-pub_year: ""
+publisher: "NXB Trẻ"
+isbn: "9780735216358"            # dc:Source - SHARED across all chapter books (per submission form)
+pub_year: "2018-02-06"           # dc:Date, format yyyy / yyyy-mm / yyyy-mm-dd
 rights: ""
+subject: "Tâm lý học & Phát triển cá nhân"
+description: >
+  Tư duy đặt cược sử dụng rất nhiều ví dụ hấp dẫn để minh họa cho những công cụ
+  hùng mạnh (và gần như không liên quan gì đến toán học) mà bất cứ ai cũng có
+  thể áp dụng được. Nó sẽ giúp bạn nhận diện những sai lầm may mắn và những
+  khoảnh khắc sáng chói xui xẻo để bạn sẽ ít có nguy cơ bị chiếm lĩnh bởi những
+  cảm xúc phản ứng, thành kiến theo phản xạ và thói quen tiêu cực. Và nó sẽ
+  giúp bạn chiêu mộ được sự giúp đỡ của đồng nghiệp, bạn bè và gia đình trên
+  cuộc hành trình tìm kiếm thành công đang tiếp diễn của mình. Cho dù tương lai
+  có ra sao đi nữa thì bạn cũng sẽ trở nên tự tin hơn, điềm tĩnh hơn và bao
+  dung với bản thân mình hơn khi đối mặt với nó. Không phải lúc nào bạn cũng
+  đưa ra được những quyết định đúng đắn, nhưng bạn sẽ có được một lợi thế lớn
+  hơn rất nhiều so với những người đặt cược bằng cảm giác thay vì bằng trí óc.
+# Không thuộc dc-metadata chuẩn DAISY - giữ ở đây để điền vào form/bảng đăng ký
+# của môn học (cột Collector / SourceURL / Note).
+collector: "Mai Chí Trung"        # người dịch / người đóng góp sách
+source_url: "https://www.nxbtre.com.vn/sach/tu-duy-dat-cuoc-quyet-dinh-sang-suot-hon-khi-khong-co-du-thong-tin-85525.html"
+note: ""
+
 # Producing team (student ids) - drives the submission folder name in step 08.
-mshv: ["MSHV1", "MSHV2", "MSHV3"]
+mshv: ["25C11016", "25C11003"]
 book_slug: "Tu_Duy_Dat_Cuoc"    # ASCII slug used for folders / zip names
 
 # DAISY content type. audioFullText = full audio + full text + full sync.

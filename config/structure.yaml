@@ -1,0 +1,60 @@
+# Final structure - confirmed across --detect scans on 1-40, 41-161, 162-260,
+# 261-322 (running headers give exact chapter-start pages) + a direct OCR of
+# the Table of Contents (pages 8-10, run-id "toc") for real chapter titles.
+#
+# All 6 real chapters + the Introduction are now fully bounded (confirmed via
+# the big-font section headings, not the noisy running-header candidates the
+# raw --detect scan produces - see output/*/step_03/review.md for those).
+#
+# Back matter (Lời Cảm Ơn 283-290, Chú Thích 291-304, Danh Mục Sách Tham Khảo
+# 305-319, back cover 320-322) deliberately NOT included - low audio value
+# (dense citation/name lists) and duration requirement already exceeded
+# (6h+ narrated vs 3h required for 3 members).
+page_offset: 0
+front_matter:
+  pages: [1, 10]
+chapters:
+  - id: intro
+    title: "Dẫn Nhập: Vì Sao Đây Không Phải Là Một Cuốn Sách Viết Về Poker"
+    level: 1
+    start_page: 11
+    end_page: 16
+    assigned_to: "25C11016"
+  - id: ch01
+    title: "Chương 1: Cuộc Đời Là Một Ván Poker, Không Phải Một Ván Cờ Vua"
+    level: 1
+    start_page: 17
+    end_page: 54
+    assigned_to: "25C11016"
+  - id: ch02
+    title: "Chương 2: Muốn Cược Không?"
+    level: 1
+    start_page: 55
+    end_page: 98
+    assigned_to: "25C11003"
+  - id: ch03
+    title: "Chương 3: Đặt Cược Để Học Hỏi - Phân Loại Tương Lai Đã Diễn Ra"
+    level: 1
+    start_page: 99
+    end_page: 150
+    assigned_to: "25C11003"
+  - id: ch04
+    title: "Chương 4: Hệ Thống Bạn Cùng Tiến"
+    level: 1
+    start_page: 151
+    end_page: 190
+    assigned_to: "25C11003"
+  - id: ch05
+    title: "Chương 5: Bất Đồng Ý Kiến Để Chiến Thắng"
+    level: 1
+    start_page: 191
+    end_page: 218
+    assigned_to: "25C11016"
+  - id: ch06
+    title: "Chương 6: Những Cuộc Phiêu Lưu Du Hành Thời Gian Trong Tâm Trí"
+    level: 1
+    start_page: 219
+    end_page: 282   # CONFIRMED (was 260 placeholder) - Lời Cảm Ơn starts at 283
+    assigned_to: "25C11016"
+back_matter:
+  pages: [283, 322]   # Lời Cảm Ơn / Chú Thích / Danh Mục Sách Tham Khảo / bìa sau - deliberately not narrated
