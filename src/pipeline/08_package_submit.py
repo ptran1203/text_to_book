@@ -29,6 +29,8 @@ def collect_members(book_dir: Path) -> list[Path]:
 
 def main() -> None:
     args = common.base_argparser(__doc__).parse_args()
+    run_id = common.use_latest_run(args.run_id)
+    log.info("run_id: %s", run_id)
     cfg = common.load_config()
     scfg = cfg.get("step_08_submit", {})
     meta = cfg.get("metadata", {})
@@ -36,7 +38,9 @@ def main() -> None:
     mshv = meta.get("mshv", []) or ["MSHV"]
     mshv_folder = "_".join(str(x) for x in mshv)
     slug = meta.get("book_slug", "book")
-    zbase = scfg.get("zip_basename", "Ten_sach")
+    # zip is named after the actual book, not a placeholder - default to the
+    # book's own slug; step_08_submit.zip_basename in pipeline.yaml overrides.
+    zbase = scfg.get("zip_basename") or slug
     per_member = bool(scfg.get("sha256_of_members", True))
 
     mastered = common.step_dir(7, create=False) / "mastered"
@@ -47,7 +51,8 @@ def main() -> None:
 
     books = sorted(p for p in src_root.iterdir() if p.is_dir())
     if args.chapter:
-        books = [b for b in books if b.name == args.chapter]
+        wanted = set(args.chapter.split(","))
+        books = [b for b in books if b.name in wanted]
     if args.limit:
         books = books[: args.limit]
 
@@ -56,8 +61,8 @@ def main() -> None:
     manifest = dict(mshv=mshv, book=meta.get("title", ""), isbn=meta.get("isbn", ""),
                     source=str(src_root.relative_to(common.ROOT)), items=[])
 
-    for i, book in enumerate(books, 1):
-        ch_dir = team_dir / f"{slug}-Chuong {i}"
+    for book in books:
+        ch_dir = team_dir / f"{slug}-{common.chapter_label(book.name)}"
         ch_dir.mkdir(parents=True, exist_ok=True)
         zip_path = ch_dir / f"{zbase}.zip"
         members = collect_members(book)

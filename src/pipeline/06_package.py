@@ -106,13 +106,21 @@ def build_opf(chapter, meta, uid, audio_files, cover_name, total_seconds) -> str
     dc.append(f'      <dc:Language>{escape(meta.get("language", "vi"))}</dc:Language>')
     isbn = meta.get("isbn", "") or ""
     if isbn:
+        # id="uid" goes on dc:Identifier (what <package unique-identifier="uid">
+        # points at); dc:Source repeats the ISBN too - the course's submission
+        # form/checker expects it there specifically.
         dc.append(f'      <dc:Identifier id="uid" scheme="ISBN">{escape(isbn)}</dc:Identifier>')
+        dc.append(f'      <dc:Source>{escape(isbn)}</dc:Source>')
     else:
         dc.append(f'      <dc:Identifier id="uid">{escape(uid)}</dc:Identifier>')
     if meta.get("publisher"):
         dc.append(f'      <dc:Publisher>{escape(meta["publisher"])}</dc:Publisher>')
     if meta.get("pub_year"):
         dc.append(f'      <dc:Date>{escape(str(meta["pub_year"]))}</dc:Date>')
+    if meta.get("subject"):
+        dc.append(f'      <dc:Subject>{escape(meta["subject"])}</dc:Subject>')
+    if meta.get("description"):
+        dc.append(f'      <dc:Description>{escape(str(meta["description"]).strip())}</dc:Description>')
     dc.append('      <dc:Format>ANSI/NISO Z39.86-2005</dc:Format>')
     dc.append('      <dc:Type>text</dc:Type>')
     if meta.get("rights"):
@@ -157,6 +165,8 @@ def build_opf(chapter, meta, uid, audio_files, cover_name, total_seconds) -> str
 
 def main() -> None:
     args = common.base_argparser(__doc__).parse_args()
+    run_id = common.use_latest_run(args.run_id)
+    log.info("run_id: %s", run_id)
     cfg = common.load_config()
     meta = cfg.get("metadata", {})
     audio_dir_name = cfg.get("step_06_package", {}).get("audio_dir_name", "audio")
@@ -164,7 +174,8 @@ def main() -> None:
     model = common.load_json(common.step_dir(3, create=False) / "doc_model.json")
     chapters = model["chapters"]
     if args.chapter:
-        chapters = [c for c in chapters if c["id"] == args.chapter]
+        wanted = set(args.chapter.split(","))
+        chapters = [c for c in chapters if c["id"] in wanted]
     if args.limit:
         chapters = chapters[: args.limit]
 

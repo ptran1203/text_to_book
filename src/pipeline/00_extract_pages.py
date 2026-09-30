@@ -4,10 +4,17 @@ data/book.pdf is a scanned book (1-bit page images, no embedded text).  For each
 page we either lift the embedded full-page scan losslessly, or - if the page is
 not a single image - rasterise it at render_dpi.
 
+Use --start/--end to jump straight to a page range (e.g. skip past front matter
+into a chapter) instead of always extracting from page 1. Every step downstream
+just processes whatever pages/manifest step 00 produced for this run, so this
+is the only place a range needs specifying.
+
 Outputs
-    output/step_00/pages/p0001.png ...
-    output/step_00/cover.<ext>          (page 1, kept in original encoding)
-    output/step_00/manifest.json        [{index, file, width, height, source, dpi}]
+    output/<run_id>/step_00/pages/p0001.png ...   (p0001 = the PDF's page 1, even
+                                                    with --start > 1 - filenames
+                                                    are absolute PDF page numbers)
+    output/<run_id>/step_00/cover.<ext>           (PDF page 1, only when included)
+    output/<run_id>/step_00/manifest.json         [{index, file, width, height, source, dpi}]
 """
 from __future__ import annotations
 
@@ -39,7 +46,13 @@ def page_is_single_fullpage_image(page: "fitz.Page") -> tuple[bool, int | None]:
 
 def main() -> None:
     ap = common.base_argparser(__doc__)
+    ap.add_argument("--start", type=int, default=1,
+                     help="first PDF page to extract, 1-based (default 1)")
+    ap.add_argument("--end", type=int, default=0,
+                     help="last PDF page to extract, inclusive (default: to the end, "
+                          "or --start + --limit - 1 if --limit is given)")
     args = ap.parse_args()
+    run_id = common.start_run(args.run_id)
     cfg = common.load_config()
     scfg = cfg.get("step_00_extract", {})
     dpi = int(scfg.get("render_dpi", 300))
@@ -55,15 +68,23 @@ def main() -> None:
     pages_dir.mkdir(exist_ok=True)
 
     doc = fitz.open(src)
-    n = doc.page_count
-    if args.limit:
-        n = min(n, args.limit)
-    log.info("PDF has %d pages; extracting %d", doc.page_count, n)
+    start = max(1, args.start)
+    if args.end:
+        end = args.end
+    elif args.limit:
+        end = start + args.limit - 1
+    else:
+        end = doc.page_count
+    end = min(end, doc.page_count)
+    if start > end:
+        sys.exit(f"--start {start} is past --end {end} (PDF has {doc.page_count} pages)")
+
+    log.info("run_id: %s", run_id)
+    log.info("PDF has %d pages; extracting %d-%d (%d pages)", doc.page_count, start, end, end - start + 1)
 
     manifest = []
-    for i in range(n):
-        page = doc[i]
-        idx = i + 1
+    for idx in range(start, end + 1):
+        page = doc[idx - 1]
         native_ok = False
         if prefer_native:
             native_ok, xref = page_is_single_fullpage_image(page)
@@ -90,8 +111,8 @@ def main() -> None:
             cover_src = pages_dir / Path(entry["file"]).name
             (out / f"cover{cover_src.suffix}").write_bytes(cover_src.read_bytes())
 
-        if idx % 25 == 0 or idx == n:
-            log.info("  %d/%d", idx, n)
+        if idx % 25 == 0 or idx == end:
+            log.info("  %d/%d (page %d of %d-%d)", idx - start + 1, end - start + 1, idx, start, end)
 
     common.dump_json(manifest, out / "manifest.json")
     native = sum(1 for e in manifest if e["source"] == "native")

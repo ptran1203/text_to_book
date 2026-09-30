@@ -1,0 +1,73 @@
+# Text substitutions applied ONLY to what's sent to piper for synthesis - the
+# displayed/DTBook text keeps the original correct spelling. piper's vi_VN
+# voice applies Vietnamese pronunciation rules to whatever it's given, so
+# English names/terms come out wrong; these give it a Vietnamese-spelled
+# approximation instead (the long-standing "phiên âm" convention Vietnamese
+# media uses for foreign names).
+#
+# UNVERIFIED BY EAR - I can't listen to the output. These are a first-pass
+# best effort covering the most frequent recurring terms across the book
+# (intro + chapters 1-6). Listen and tell me what still sounds wrong so I can
+# correct entries here - this file is meant to grow through that feedback.
+#
+# Longest phrase wins when phrases overlap; matching is case-sensitive on the
+# original text.
+
+replacements:
+  # --- the book's own central term, appears constantly ---
+  "poker": "pô kơ"
+  "Poker": "Pô kơ"
+
+  # --- acronyms: spoken as Vietnamese letter names ---
+  "CEO": "xi i âu"
+  "NBC": "en bi xi"
+  "MTV": "em ti vi"
+  "BBS": "bi bi ét sì"
+  "CIA": "xi ai ê"
+
+  # --- places ---
+  "New Hampshire": "Niu Hem sơ"
+  "Pennsylvania": "Pen sồn vây nia"
+  "Montana": "Môn ta na"
+  "Las Vegas": "Lát Vê gát"
+  "Vegas": "Vê gát"
+  "New Jersey": "Niu Giơ si"
+  "Des Moines": "Đơ Moin"
+  "Princeton": "Prin xtơn"
+  "Dartmouth": "Đác mợt"
+  "Stanford": "Xtan phợt"
+  "Harvard": "Ha vợt"
+
+  # --- people ---
+  "Pete Carroll": "Pit Ca rôn"
+  "Erik Seidel": "E rích Sai đồ"
+  "Phil Ivey": "Phin Ai vi"
+  "John Hennigan": "Giôn Hen ni gân"
+  "Daniel Kahneman": "Đen niên Ca nơ mân"
+  "Richard Feynman": "Rít chợt Phai mân"
+  "Steve Bartman": "Xtiv Bát mân"
+  "David Letterman": "Đây vít Lét tơ mân"
+  "Marty McFly": "Ma ti Mác phlai"
+  "Lauren Conrad": "Lo ren Con rát"
+  "Russell Wilson": "Rát sồ Uyn sơn"
+  "Marshawn Lynch": "Ma sần Linh"
+  "Von Neumann": "Vôn Nôi mân"
+  "Neumann": "Nôi mân"
+
+  # --- redundant English names dropped where a Vietnamese gloss is already
+  # spoken right next to them in the sentence (no need to also say the English) ---
+  "(National Science Foundation - NSF)": "(en ét ép)"
+  "(National Science Foundation – NSF)": "(en ét ép)"
+
+  # --- teams / orgs / titles / brands ---
+  "World Series of Poker": "Guồ Xi ri Pô cơ"
+  "Super Bowl": "Su pơ Bôn"
+  "World Series": "Guồ Xi ri"
+  "Seattle Seahawks": "Xi át tồ Xi hốc"
+  "Seahawks": "Xi hốc"
+  "New England Patriots": "Niu Inh lân Pết ri ợt"
+  "Chicago Cubs": "Si ca gô Cấp"
+  "Cubs": "Cấp"
+  "Citizen Kane": "Xi ti dần Kên"
+  "White Castle": "Goai Cát xồ"
+  "SnackWell's": "Xnát goen"

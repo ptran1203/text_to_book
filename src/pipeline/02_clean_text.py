@@ -127,6 +127,8 @@ def hunspell_flags(text: str, dic_dir: Path):
 
 def main() -> None:
     args = common.base_argparser(__doc__).parse_args()
+    run_id = common.use_latest_run(args.run_id)
+    log.info("run_id: %s", run_id)
     cfg = common.load_config()
     scfg = cfg.get("step_02_clean", {})
     repls = [(p, r) for p, r in scfg.get("replacements", [])]

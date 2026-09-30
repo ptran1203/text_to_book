@@ -114,6 +114,8 @@ def run_mastering(dp2: str, src_dir: Path, dst_dir: Path) -> str:
 
 def main() -> None:
     args = common.base_argparser(__doc__).parse_args()
+    run_id = common.use_latest_run(args.run_id)
+    log.info("run_id: %s", run_id)
     cfg = common.load_config()
     vcfg = cfg.get("step_07_validate", {})
     dp2 = common.which_or_config(vcfg.get("dp2"), "dp2")
@@ -121,7 +123,8 @@ def main() -> None:
     daisy = common.step_dir(6, create=False) / "daisy"
     books = sorted(p for p in daisy.iterdir() if p.is_dir()) if daisy.exists() else []
     if args.chapter:
-        books = [b for b in books if b.name == args.chapter]
+        wanted = set(args.chapter.split(","))
+        books = [b for b in books if b.name in wanted]
     if args.limit:
         books = books[: args.limit]
     if not books:

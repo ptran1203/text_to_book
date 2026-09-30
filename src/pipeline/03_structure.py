@@ -3,9 +3,10 @@
 Two modes:
 
   python 03_structure.py --detect
-      Heuristically finds chapter headings (glyph height in the hOCR, ALL-CAPS
-      lines, and the heading regex) and writes config/structure.yaml as a
-      TEMPLATE for you to correct, plus output/step_03/review.md.
+      Heuristically finds chapter headings (glyph height from step 01's line
+      boxes, ALL-CAPS lines, and the heading regex) and writes
+      config/structure.yaml as a TEMPLATE for you to correct, plus
+      output/step_03/review.md.
 
   python 03_structure.py
       Reads config/structure.yaml, builds the document model and one valid
@@ -28,23 +29,16 @@ import common
 
 log = common.get_logger("step03")
 
-_BBOX = re.compile(r"bbox (\d+) (\d+) (\d+) (\d+)")
-_LINE = re.compile(r"<span class='ocr_line'[^>]*title=\"([^\"]+)\"[^>]*>(.*?)</span>", re.S)
-_TAGS = re.compile(r"<[^>]+>")
 _SENT = re.compile(r"(.+?(?:[.!?…]+[”’\")]?|$))(?:\s+|$)", re.S)
 
 
 # ---------------------------------------------------------------- detect mode
-def hocr_lines(path: Path):
-    html = path.read_text(encoding="utf-8", errors="replace")
-    for title, inner in _LINE.findall(html):
-        m = _BBOX.search(title)
-        if not m:
-            continue
-        x0, y0, x1, y1 = map(int, m.groups())
-        text = common.nfc(re.sub(r"\s+", " ", _TAGS.sub("", inner)).strip())
+def page_lines(path: Path):
+    """(text, height) for every recognised line on a page, from step 01's json."""
+    for rec in common.load_json(path):
+        text = rec.get("text", "").strip()
         if text:
-            yield text, (y1 - y0)
+            yield text, rec["height"]
 
 
 def detect(cfg) -> None:
@@ -53,15 +47,15 @@ def detect(cfg) -> None:
     hrx = re.compile(scfg.get("heading_regex", r"^(PHẦN|Phần|CHƯƠNG|Chương|Chapter|PART)\b"))
     offset = int(scfg.get("page_offset", 0))
 
-    hdir = common.step_dir(1, create=False) / "hocr"
-    hocr_files = sorted(hdir.glob("p*.hocr"))
-    if not hocr_files:
-        sys.exit("no hOCR - run step 01 first")
+    ldir = common.step_dir(1, create=False) / "lines"
+    line_files = sorted(ldir.glob("p*.json"))
+    if not line_files:
+        sys.exit("no line data - run step 01 first")
 
     candidates = []
-    for f in hocr_files:
+    for f in line_files:
         idx = int(f.stem[1:])
-        rows = list(hocr_lines(f))
+        rows = list(page_lines(f))
         if not rows:
             continue
         heights = sorted(h for _, h in rows)
@@ -91,7 +85,7 @@ def detect(cfg) -> None:
 
     out = common.step_dir(3)
     lines = ["# Detected chapters (REVIEW & EDIT config/structure.yaml)\n",
-             f"_{len(chapters)} candidates from {len(hocr_files)} pages_\n",
+             f"_{len(chapters)} candidates from {len(line_files)} pages_\n",
              "| id | img page | printed | rel height | title |",
              "|----|---------|---------|-----------|-------|"]
     for c, (idx, text, h, rel) in zip(chapters, candidates):
@@ -194,6 +188,8 @@ def main() -> None:
     ap = common.base_argparser(__doc__)
     ap.add_argument("--detect", action="store_true", help="seed config/structure.yaml and exit")
     args = ap.parse_args()
+    run_id = common.use_latest_run(args.run_id)
+    log.info("run_id: %s", run_id)
     cfg = common.load_config()
 
     if args.detect:
@@ -215,7 +211,8 @@ def main() -> None:
 
     chapters = struct.get("chapters", [])
     if args.chapter:
-        chapters = [c for c in chapters if c["id"] == args.chapter]
+        wanted = set(args.chapter.split(","))
+        chapters = [c for c in chapters if c["id"] in wanted]
     if args.limit:
         chapters = chapters[: args.limit]
     if not chapters:
@@ -238,16 +235,40 @@ def main() -> None:
         nxt = [x for x in starts if x > s]
         end = (min(nxt) - 1) if nxt else last_img
         end = int(c.get("end_page", end))
-        cm = build_chapter_model(c, pages, end, offset, split_sent)
-        model["chapters"].append(cm)
 
+        # A chapter whose page range doesn't overlap this run's cleaned text at
+        # all is a mismatch (e.g. structure.yaml built for pages 17-40, but this
+        # run's step 00/01/02 only covered a different range) - refuse to
+        # silently build an empty-content "book" for it.
+        wanted = range(s, end + 1)
+        missing = [img for img in wanted if img not in pages]
+        if len(missing) == len(wanted):
+            sys.exit(
+                f"chapter {c['id']}: none of pages {s}-{end} exist in this run's cleaned "
+                f"text (this run only has pages {min(pages)}-{max(pages)}). Extract/OCR "
+                f"the chapter's actual pages first, e.g.:\n"
+                f"  python src/pipeline/00_extract_pages.py --start {s} --end {end}\n"
+                f"  python src/pipeline/01_ocr.py\n"
+                f"  python src/pipeline/02_clean_text.py"
+            )
+        if missing:
+            log.warning("  %s: %d/%d pages missing from this run's OCR %s - text will have gaps",
+                        c["id"], len(missing), len(wanted), missing[:5])
+
+        cm = build_chapter_model(c, pages, end, offset, split_sent)
+
+        n_p = sum(1 for b in cm["blocks"] if b["type"] == "p")
+        n_s = sum(len(b["sents"]) for b in cm["blocks"] if b["type"] == "p")
+        if n_p == 0:
+            sys.exit(f"chapter {c['id']} has ZERO paragraphs after building (pages {s}-{end}) - "
+                     f"refusing to write an empty book. Check the chapter's page range.")
+
+        model["chapters"].append(cm)
         cdir = out / "chapters" / cm["id"]
         cdir.mkdir(parents=True, exist_ok=True)
         uid = f'{meta.get("isbn") or meta.get("book_slug", "book")}-{cm["id"]}'
         (cdir / "book.dtbook.xml").write_text(dtbook_xml(cm, meta, uid), encoding="utf-8")
 
-        n_p = sum(1 for b in cm["blocks"] if b["type"] == "p")
-        n_s = sum(len(b["sents"]) for b in cm["blocks"] if b["type"] == "p")
         review.append(f"| {cm['id']} | {s}-{end} | {n_p} | {n_s} | {cm['title']} |")
         log.info("  %s  pages %d-%d  %d paras  %d sentences", cm["id"], s, end, n_p, n_s)
 

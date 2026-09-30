@@ -25,4 +25,4 @@ Huong dan: https://docs.google.com/presentation/d/1JJl0Sy5eJnCZ_7IxEMl7jFcWCd-Sp
 
 1. Trần Hoàng Phát: 25C11016
 2. Đỗ Nguyễn Huy Hiệu: 25C11003
-3. Nguyễn Trọng Hiếu: 25C11042
+<!-- 3. Nguyễn Trọng Hiếu: 25C11042 -->

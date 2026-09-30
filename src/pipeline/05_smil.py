@@ -86,13 +86,16 @@ def build_smil(chapter: dict, timings: dict, uid: str):
 
 def main() -> None:
     args = common.base_argparser(__doc__).parse_args()
+    run_id = common.use_latest_run(args.run_id)
+    log.info("run_id: %s", run_id)
     cfg = common.load_config()
     meta = cfg.get("metadata", {})
 
     model = common.load_json(common.step_dir(3, create=False) / "doc_model.json")
     chapters = model["chapters"]
     if args.chapter:
-        chapters = [c for c in chapters if c["id"] == args.chapter]
+        wanted = set(args.chapter.split(","))
+        chapters = [c for c in chapters if c["id"] in wanted]
     if args.limit:
         chapters = chapters[: args.limit]
 

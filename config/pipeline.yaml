@@ -3,6 +3,9 @@
 
 source_pdf: data/book.pdf
 
+requirements:
+  min_seconds_per_member: 3600   # 1 hour of narrated speech per member (course requirement)
+
 step_00_extract:
   # When a page is a single full-page scan, extract that image losslessly.
   # Otherwise rasterise the page vector content at this DPI.
@@ -11,16 +14,26 @@ step_00_extract:
   image_format: png            # png | tiff  (for rendered pages)
 
 step_01_ocr:
+  # Tesseract is used ONLY for line detection (bounding boxes / glyph heights).
+  # Actual character recognition is done by VietOCR below - much more accurate
+  # on Vietnamese diacritics (~0.90+ line confidence on real scanned pages,
+  # vs Tesseract's own 'vie' recognizer being noticeably worse).
   tesseract: "C:/Program Files/Tesseract-OCR/tesseract.exe"
+  tessdata_dir: "C:/tools/tessdata"   # avoids needing admin rights on Program Files\...\tessdata
   lang: vie
   oem: 1                       # 1 = LSTM
   psm: 6                       # 6 = assume a single uniform block of text
   preprocess:
     grayscale: true
     autocontrast: true
-    otsu_threshold: true       # binarise; needs numpy
-    deskew: true               # small-angle deskew; needs numpy
-  min_word_confidence: 60      # words below this go into issues.csv
+    otsu_threshold: false      # binarising hurt VietOCR in testing - it wants natural grayscale
+    deskew: true                # small-angle deskew; needs numpy
+  vietocr:
+    config_name: vgg_transformer   # see vietocr.tool.config.Cfg.url_config for alternatives
+    device: cuda:0                  # "cpu" if no GPU; this machine has CUDA
+    weights: ""                     # override path; blank = auto-download pretrained weights
+  line_padding_ratio: 0.25     # vertical padding added to each line crop (fraction of its height)
+  min_line_confidence: 0.80    # VietOCR prob (0-1) below this -> lowconf.csv
 
 step_02_clean:
   dehyphenate_linebreaks: true
@@ -34,7 +47,11 @@ step_02_clean:
   # ordered list of [pattern, replacement] regexes applied to every page
   replacements:
     - ['[ \t]+([,.;:!?])', '\1']       # no space before punctuation
-    - ['([,.;:!?])(?=\S)', '\1 ']      # ensure space after punctuation
+    # ensure space after punctuation, EXCEPT inside a number (Vietnamese uses
+    # comma as the decimal separator and period as the thousands separator -
+    # "6,4 triệu" is 6.4 million; without these guards it became "6, 4",
+    # which piper then read as two numbers with a pause between them)
+    - ['(?<!\d)([,.;:!?])(?=[^\s\d])', '\1 ']
     - ['\u00a0', ' ']                  # nbsp -> space
 
 step_03_structure:
@@ -46,9 +63,9 @@ step_03_structure:
   sentence_split: true
 
 step_04_tts:
-  piper: "piper"                       # or C:/tools/piper/piper.exe
+  piper: "C:/tools/piper/piper.exe"
   model: "C:/tools/piper/vi_VN-vais1000-medium.onnx"
-  ffmpeg: "ffmpeg"
+  ffmpeg: "C:/Users/hai/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-9.0.1-full_build/bin/ffmpeg.exe"
   mp3_qscale: 4                        # libmp3lame VBR quality (0 best .. 9)
   sample_rate: 22050
   length_scale: 1.0                    # >1 slower speech
@@ -67,6 +84,6 @@ step_07_validate:
   fail_on_validator_error: true
 
 step_08_submit:
-  # Output tree:  <mshv_folder>/<book_slug>-Ch\u01B0\u01A1ng N/{Ten_sach.zip, Ten_sach_sha256sums.txt}
-  zip_basename: "Ten_sach"            # README uses "T\u00ean_s\u00e1ch"; ASCII-safe default
+  # Output tree:  <mshv_folder>/<book_slug>-Ch\u01B0\u01A1ng N/{<book_slug>.zip, <book_slug>_sha256sums.txt}
+  zip_basename: ""                    # blank = use metadata.yaml's book_slug (the actual book name)
   sha256_of_members: true            # hash each file inside the zip (sha256sums.txt format)
